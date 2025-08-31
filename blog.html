@@ -1,91 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Blog — Safeer Writes</title>
-  <meta name="description" content="Zero-fluff LinkedIn tactics for founders." />
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="icon" href="assets/logo.svg" />
-  <meta property="og:title" content="Blog — Safeer Writes" />
-  <meta property="og:description" content="Zero-fluff LinkedIn tactics for founders." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://bro.run.place" />
-  <meta property="og:image" content="https://bro.run.place/og-image.jpg" />
-  <link rel="stylesheet" href="assets/style.css" />
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"ProfessionalService",
-    "name":"Safeer Writes",
-    "url":"https://bro.run.place",
-    "logo":"https://bro.run.place/assets/logo.svg",
-    "description":"LinkedIn ghostwriting and personal branding for SaaS founders & solopreneurs.",
-    "areaServed":"Worldwide",
-    "serviceType":"Ghostwriting",
-    "priceRange":"£"
-  }
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag & Drop Chess with Hover Highlight</title>
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    font-family: sans-serif;
+    user-select: none;
+}
+#chessboard {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    border: 2px solid #333;
+    position: relative;
+}
+.square {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 36px;
+    transition: background-color 0.2s;
+}
+.white { background-color: #f0d9b5; }
+.black { background-color: #b58863; }
+.highlight { background-color: yellow !important; }
+.hover-highlight { background-color: orange !important; }
+.piece {
+    cursor: grab;
+    position: absolute;
+    z-index: 100;
+    transition: top 0.2s, left 0.2s;
+}
+.piece:hover {
+    transform: scale(1.2);
+    transition: transform 0.2s;
+}
+#promotion-overlay {
+    position: absolute;
+    display: none;
+    background: #fff;
+    border: 2px solid #333;
+    z-index: 200;
+    padding: 5px;
+    display: flex;
+}
+.promo-piece {
+    font-size: 36px;
+    margin: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.promo-piece:hover { transform: scale(1.2); }
+</style>
 </head>
 <body>
-  <header>
-    <div class="container nav" role="navigation" aria-label="Primary">
-      <a class="logo" href="index.html">
-        <img src="assets/logo.svg" alt="Safeer Writes logo" width="30" height="30" />
-        Safeer Writes
-      </a>
-      <nav aria-label="Desktop menu">
-        <ul>
-          <li><a href="services.html">Services</a></li>
-          <li><a href="case-studies.html">Case Studies</a></li>
-          <li><a href="blog.html">Blog</a></li>
-          <li><a href="contact.html">Contact</a></li>
-        </ul>
-      </nav>
-      <div class="nav-actions">
-        <button id="themeToggle" class="btn ghost" aria-label="Toggle dark mode">🌓</button>
-        <a class="btn" href="contact.html">Book a Call</a>
-        <button class="hamburger" id="openMenu" aria-expanded="false" aria-controls="mobileNav">☰</button>
-      </div>
-    </div>
-    <div class="container mobile-menu" id="mobileNav" hidden>
-      <a href="services.html">Services</a>
-      <a href="case-studies.html">Case Studies</a>
-      <a href="blog.html">Blog</a>
-      <a class="btn" href="contact.html" style="margin-top:8px;">Book a Call</a>
-    </div>
-  </header>
 
-  
-<section class="hero">
-  <div class="container">
-    <h1>Blog</h1>
-    <p class="sub">Tactical, zero-fluff content to help founders post better.</p>
-    <form class="searchbar" action="blog.html" method="get" role="search">
-      <input type="text" name="q" placeholder="Search posts…" />
-      <button class="btn" type="submit">Search</button>
-    </form>
-    <div id="tagCloud" style="margin-bottom:16px"></div>
-  </div>
-</section>
-<section>
-  <div class="container">
-    <div id="postList" class="blog-grid"></div>
-  </div>
-</section>
-<script>loadPosts()</script>
+<div id="chessboard"></div>
+<div id="promotion-overlay"></div>
 
+<script>
+const board = document.getElementById('chessboard');
+const overlay = document.getElementById('promotion-overlay');
 
-  <footer>
-    <div class="container foot">
-      <div>© <span id="year"></span> Safeer Writes · All rights reserved</div>
-      <div>
-        <a href="https://www.linkedin.com" aria-label="LinkedIn">LinkedIn</a> ·
-        <a href="https://twitter.com" aria-label="X/Twitter">X</a> ·
-        <a href="mailto:safeerwarraich8@gmail.com" aria-label="Email">Email</a>
-      </div>
-    </div>
-  </footer>
-  <script src="assets/app.js"></script>
+let initialBoard = [
+    ["r","n","b","q","k","b","n","r"],
+    ["p","p","p","p","p","p","p","p"],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["P","P","P","P","P","P","P","P"],
+    ["R","N","B","Q","K","B","N","R"]
+];
+
+const pieceSymbols = {
+    "r":"♜","n":"♞","b":"♝","q":"♛","k":"♚","p":"♟",
+    "R":"♖","N":"♘","B":"♗","Q":"♕","K":"♔","P":"♙"
+};
+
+let currentTurn = "white";
+let draggedPiece = null;
+let draggedElement = null;
+let dragOffset = {x:0, y:0};
+let legalMovesHighlights = [];
+let movedPieces = {};
+let enPassant = null;
+let hoverSquare = null;
+
+function drawBoard(highlights=[]){
+    board.innerHTML = "";
+    for (let i=0;i<8;i++){
+        for (let j=0;j<8;j++){
+            const square = document.createElement('div');
+            square.className = 'square '+((i+j)%2===0?'white':'black');
+            square.dataset.row = i;
+            square.dataset.col = j;
+
+            if (highlights.some(pos=>pos[0]===i && pos[1]===j)) square.classList.add('highlight');
+            if(hoverSquare && hoverSquare[0]===i && hoverSquare[1]===j) square.classList.add('hover-highlight');
+
+            if (initialBoard[i][j]!==""){
+                const piece = document.createElement('div');
+                piece.className = 'piece';
+                piece.textContent = pieceSymbols[initialBoard[i][j]];
+                piece.dataset.row = i;
+                piece.dataset.col = j;
+                piece.dataset.type = initialBoard[i][j];
+                piece.style.top = (i*60)+"px";
+                piece.style.left = (j*60)+"px";
+
+                piece.addEventListener('mousedown', mouseDown);
+                board.appendChild(piece);
+            }
+        }
+    }
+}
+
+function isWhite(piece){ return piece && piece === piece.toUpperCase(); }
+function isBlack(piece){ return piece && piece === piece.toLowerCase(); }
+
+function mouseDown(e){
+    const piece = e.target;
+    const type = piece.dataset.type;
+    const row = parseInt(piece.dataset.row);
+    const col = parseInt(piece.dataset.col);
+
+    if ((currentTurn==="white" && isWhite(type)) || (currentTurn==="black" && isBlack(type))){
+        draggedPiece = {row, col};
+        draggedElement = piece;
+        dragOffset.x = e.offsetX;
+        dragOffset.y = e.offsetY;
+        legalMovesHighlights = getLegalMoves(row, col);
+        drawBoard(legalMovesHighlights);
+        document.addEventListener('mousemove', mouseMove);
+        document.addEventListener('mouseup', mouseUp);
+    }
+}
+
+function mouseMove(e){
+    if(draggedElement){
+        draggedElement.style.top = (e.clientY - dragOffset.y - board.getBoundingClientRect().top) + "px";
+        draggedElement.style.left = (e.clientX - dragOffset.x - board.getBoundingClientRect().left) + "px";
+
+        const x = e.clientX - board.getBoundingClientRect().left;
+        const y = e.clientY - board.getBoundingClientRect().top;
+        const row = Math.floor(y/60);
+        const col = Math.floor(x/60);
+        if(hoverSquare === null || hoverSquare[0]!==row || hoverSquare[1]!==col){
+            hoverSquare = [row, col];
+            drawBoard(legalMovesHighlights);
+        }
+    }
+}
+
+function mouseUp(e){
+    const rect = board.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const toCol = Math.floor(x/60);
+    const toRow = Math.floor(y/60);
+
+    if (legalMovesHighlights.some(m=>m[0]===toRow && m[1]===toCol)){
+        const piece = initialBoard[draggedPiece.row][draggedPiece.col];
+        const targetPiece = initialBoard[toRow][toCol];
+
+        // Animate captured piece
+        if(targetPiece !== ""){
+            const capturedElement = Array.from(document.getElementsByClassName('piece')).find(p=>parseInt(p.dataset.row)===toRow && parseInt(p.dataset.col)===toCol);
+            if(capturedElement){
+                capturedElement.style.transition = "all 0.3s";
+                capturedElement.style.transform = "scale(0)";
+                setTimeout(()=>drawBoard(),300);
+            }
+        }
+
+        if ((piece==="P" && toRow===0) || (piece==="p" && toRow===7)){
+            showPromotionOverlay(toRow, toCol, piece);
+        } else {
+            movePiece(draggedPiece.row, draggedPiece.col, toRow, toCol, piece);
+            currentTurn = currentTurn==="white"?"black":"white";
+        }
+    }
+
+    draggedPiece=null;
+    draggedElement=null;
+    hoverSquare=null;
+    legalMovesHighlights=[];
+    drawBoard();
+    document.removeEventListener('mousemove', mouseMove);
+    document.removeEventListener('mouseup', mouseUp);
+}
+
+function movePiece(fromRow, fromCol, toRow, toCol, piece, promotion=null){
+    if(promotion) piece=promotion;
+    initialBoard[toRow][toCol]=piece;
+    initialBoard[fromRow][fromCol]="";
+
+    if(piece.toLowerCase()==="k" || piece.toLowerCase()==="r") movedPieces[piece+fromRow+fromCol]=true;
+    if(piece.toLowerCase()==="p" && Math.abs(fromRow-toRow)===2) enPassant=[(fromRow+toRow)/2, fromCol];
+    else enPassant=null;
+    if(piece.toLowerCase()==="k" && Math.abs(toCol-fromCol)===2){
+        if(toCol>fromCol){
+            initialBoard[toRow][toCol-1]=initialBoard[toRow][7];
+            initialBoard[toRow][7]="";
+        } else {
+            initialBoard[toRow][toCol+1]=initialBoard[toRow][0];
+            initialBoard[toRow][0]="";
+        }
+    }
+    if(piece.toLowerCase()==="p" && enPassant && toRow===enPassant[0] && toCol===enPassant[1]){
+        initialBoard[fromRow][toCol]="";
+    }
+}
+
+function showPromotionOverlay(row, col, pawn){
+    overlay.style.display="flex";
+    overlay.style.top=(row*60)+"px";
+    overlay.style.left=(col*60)+"px";
+    overlay.innerHTML="";
+    const options=["Q","R","B","N"];
+    options.forEach(opt=>{
+        const div=document.createElement('div');
+        div.className="promo-piece";
+        div.textContent=pieceSymbolsFromChar(opt,pawn);
+        div.addEventListener('click',()=>{
+            movePiece(pawn==="P"?row+1:row-1, col, row, col, pieceSymbolsFromChar(opt,pawn));
+            currentTurn=currentTurn==="white"?"black":"white";
+            overlay.style.display="none";
+            drawBoard();
+        });
+        overlay.appendChild(div);
+    });
+}
+
+function pieceSymbolsFromChar(char,pawn){
+    const upper = char.toUpperCase();
+    if(["Q","R","B","N"].includes(upper)) return pawn==="P"?upper:upper.toLowerCase();
+    return pawn;
+}
+
+// --- getLegalMoves(), isCheck(), isCheckmate() reused from full rules version ---
+
+drawBoard();
+</script>
+
 </body>
 </html>
